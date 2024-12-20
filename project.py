@@ -13,7 +13,7 @@ from datetime import datetime
 devices = []
 option = 0
 csv_file = 'devices.csv'
-menu_options = {'1': "Device List", '2': 'Add Device', '3':'Del Device', "4": "Make Backup", "5": "Exit"}
+
 
 def get_device_list():
     # Read CSV file into a list of dictionaries
@@ -24,24 +24,27 @@ def get_device_list():
         if rows:
             for row in rows:
                 devices.append(row)
+    return devices
     
 def write_device_list():
-    
     # Writing dictionary data to CSV
-    with open(csv_file, mode='w', newline='') as file:
-        # Define the fieldnames (keys from the first dictionary)
-        fieldnames = devices[0].keys()
+    if len(devices):
+        with open(csv_file, mode='w', newline='') as file:
+            # Define the fieldnames (keys from the first dictionary)
+            fieldnames = devices[0].keys()
 
-        # Create a DictWriter object
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
+            # Create a DictWriter object
+            writer = csv.DictWriter(file, fieldnames=fieldnames)
 
-        # Write the header (column names)
-        writer.writeheader()
+            # Write the header (column names)
+            writer.writeheader()
 
-        # Write the rows (data)
-        writer.writerows(devices)
+            # Write the rows (data)
+            writer.writerows(devices)
 
-        print(colored("\n> Data written to CSV successfully!", "green"))
+            print(colored("\n> Data written to CSV successfully!", "green"))
+    
+    return True
     
 # Connection details
 def get_config(host, username, password):
@@ -86,35 +89,40 @@ def get_config(host, username, password):
 
 
 
+def menu_options():
+    menu_list = {'1': "Device List", '2': 'Add Device', '3':'Del Device', "4": "Make Backup", "5": "Exit"}
+    
+    return menu_list
+
+
+
 def menu():
     print()
     print(colored("==========================================", "green"))
-    for key, value in menu_options.items():
+    for key, value in menu_options().items():
         print(f"{key}. {value}")
     print(colored("==========================================", "green"))
     print()
 
-def add_device():
-    name = input("Device Name: ")
-    ip = input("Device IP: ")
+def add_device(name, ip, test=False):
     max_id = 0
     if devices:
         max_id = int(max(device['id'] for device in devices))
+    max_id += 1
     
-    devices.append({'id': max_id + 1, 'name':name, 'ip': ip})
+    if not test:
+        devices.append({'id': max_id, 'name':name, 'ip': ip})
+       
+    return max_id
     
-    write_device_list()
     
-    print(colored("\n> Device added!", "green"))
+    
 
 
-
-def del_device():
+def del_device(id_to_remove, test=False):
     global devices
     new_list = []
     result = False
-    
-    id_to_remove = int(input('Device ID: '))
     
     for device in devices:
         if int(device['id']) == id_to_remove:
@@ -122,12 +130,15 @@ def del_device():
         else:
             new_list.append(device)
     
-    devices = new_list
-    
+    if not test:
+        devices = new_list
+       
     if result:
         print(colored("\n> Device deleted!", "red"))
     else:
         print(colored("\n> Device not found!", "red"))
+        
+    return id_to_remove
     
 
 def device_list():
@@ -209,6 +220,8 @@ def clear_screen():
     else:
         os.system('clear')
         
+    return True
+        
 def bye():
     print(colored("\n==========================================", "red"))
     print("Bye!")
@@ -236,10 +249,15 @@ if __name__ == "__main__":
                 device_list()
             # ADD DEVICE
             if option == '2':
-                add_device()
+                name = input("Device Name: ")
+                ip = input("Device IP: ")
+                add_device(name, ip)
+                print(colored("\n> Device added!", "green"))
+                
             # DEL DEVICE
             if option == '3':
-                del_device()
+                id_to_remove = int(input('Device ID: '))
+                del_device(id_to_remove)
             # BACKUP
             if option == '4':
                 make_backup()
